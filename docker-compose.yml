@@ -1,0 +1,44 @@
+services:
+  nginx:
+    image: nginx:1.19.0
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - wordpress
+
+  wordpress:
+    image: wordpress:5.4.2-php7.2-apache
+    volumes:
+      - ./var/www/html:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: example
+      WORDPRESS_DB_NAME: wordpress
+    deploy:
+      replicas: 3
+
+  locust:
+    image: grubykarol/locust
+    environment:
+      - ATTACKED_HOST=http://wordpress
+      - LOCUST_OPTS=--users 10 --spawn-rate 10
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./locust:/locust
+    depends_on:
+      - wordpress
+
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: wordpress
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
